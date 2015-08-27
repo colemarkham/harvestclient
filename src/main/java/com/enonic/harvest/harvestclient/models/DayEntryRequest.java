@@ -1,10 +1,12 @@
 package com.enonic.harvest.harvestclient.models;
 
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -15,60 +17,50 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import com.enonic.harvest.harvestclient.TimeAdapter;
 import com.enonic.harvest.harvestclient.exceptions.HarvestClientException;
 
-@XmlRootElement(name="day-entry")
+@XmlRootElement(name = "request")
 @XmlAccessorType(XmlAccessType.NONE)
-public class DayEntry
+public class DayEntryRequest
 {
 
     @XmlElement(name = "hours")
     private BigDecimal hours;
 
-    @XmlElement(name = "id")
-    private Integer id;
-
     @XmlElement(name = "notes")
     private String notes;
 
-    @XmlElement(name = "project-id")
+    @XmlElement(name = "project_id")
     private Integer projectId;
 
-    @XmlElement(name = "spent-at")
+    @XmlElement(name = "spent_at")
     private Date spentAt;
     
-    @XmlElement(name = "started-at")
+    @XmlElement(name = "started_at")
     @XmlJavaTypeAdapter(TimeAdapter.class)
     private Date startedAt;
     
-    @XmlElement(name = "ended-at")
+    @XmlElement(name = "ended_at")
     @XmlJavaTypeAdapter(TimeAdapter.class)
     private Date endedAt;
 
-    @XmlElement(name = "task-id")
+    @XmlElement(name = "task_id")
     private Integer taskId;
 
-    @XmlElement(name = "user-id")
+    @XmlElement(name = "user_id")
     private Integer userId;
 
-    @XmlElement(name = "is-billed")
-    private boolean isBilled;
-
-    @XmlElement(name = "is-closed")
-    private boolean isClosed;
-
-    @XmlElement(name = "updated-at")
-    private Date updatedAt;
-
-    @XmlElement(name = "created-at")
-    private Date createdAt;
-
-    public Date getCreatedAt()
-    {
-        return createdAt;
+    public DayEntryRequest() {
+	// empty request
     }
 
-    public void setCreatedAt(Date createdAt)
-    {
-        this.createdAt = createdAt;
+    public DayEntryRequest(DayEntry entry) {
+	hours = entry.getHours();
+	notes = entry.getNotes();
+	projectId = entry.getProjectId();
+	spentAt = entry.getSpentAt();
+	startedAt = entry.getStartedAt();
+	endedAt = entry.getEndedAt();
+	taskId = entry.getTaskId();
+	userId = entry.getUserId();
     }
 
     public BigDecimal getHours()
@@ -79,26 +71,6 @@ public class DayEntry
     public void setHours(BigDecimal hours)
     {
         this.hours = hours;
-    }
-
-    public Integer getId()
-    {
-        return id;
-    }
-
-    public void setId(Integer id)
-    {
-        this.id = id;
-    }
-
-    public boolean isClosed()
-    {
-        return isClosed;
-    }
-
-    public void setClosed(boolean isClosed)
-    {
-        this.isClosed = isClosed;
     }
 
     public String getNotes()
@@ -134,15 +106,15 @@ public class DayEntry
     public Date getStartedAt() {
 	return startedAt;
     }
-    
+
     public void setStartedAt(Date startedAt) {
 	this.startedAt = startedAt;
     }
-    
+
     public Date getEndedAt() {
 	return endedAt;
     }
-    
+
     public void setEndedAt(Date endedAt) {
 	this.endedAt = endedAt;
     }
@@ -157,16 +129,6 @@ public class DayEntry
         this.taskId = taskId;
     }
 
-    public Date getUpdatedAt()
-    {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt)
-    {
-        this.updatedAt = updatedAt;
-    }
-
     public Integer getUserId()
     {
         return userId;
@@ -177,28 +139,36 @@ public class DayEntry
         this.userId = userId;
     }
 
-    public boolean isBilled()
-    {
-        return isBilled;
-    }
-
-    public void setBilled(boolean isBilled)
-    {
-        this.isBilled = isBilled;
-    }
-    
-    public static DayEntry fromInputStream(final InputStream xml)
+    public static DayEntryRequest fromInputStream(final InputStream xml)
             throws HarvestClientException
     {
         try
         {
-            JAXBContext context = JAXBContext.newInstance(DayEntry.class);
+            JAXBContext context = JAXBContext.newInstance(DayEntryRequest.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            return (DayEntry) unmarshaller.unmarshal(xml);
+            return (DayEntryRequest) unmarshaller.unmarshal(xml);
         }
         catch (Exception e)
         {
             throw new HarvestClientException("Unable to parse XML into DayEntry.", e);
         }
     }
+    
+    public String toXML()
+            throws HarvestClientException
+    {
+        try
+        {
+            JAXBContext context = JAXBContext.newInstance(DayEntryRequest.class);
+            Marshaller marshaller = context.createMarshaller();
+            StringWriter writer = new StringWriter();
+	    marshaller.marshal(this, writer);
+	    return writer.toString();
+        }
+        catch (Exception e)
+        {
+            throw new HarvestClientException("Unable to parse XML into DayEntry.", e);
+        }
+    }
+    
 }

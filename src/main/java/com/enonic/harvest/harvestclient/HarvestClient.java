@@ -1,12 +1,31 @@
 package com.enonic.harvest.harvestclient;
 
+import java.util.Date;
+
 import com.enonic.harvest.harvestclient.exceptions.HarvestClientException;
+import com.enonic.harvest.harvestclient.models.Client;
+import com.enonic.harvest.harvestclient.models.ClientCollection;
+import com.enonic.harvest.harvestclient.models.DayEntry;
+import com.enonic.harvest.harvestclient.models.DayEntryCollection;
+import com.enonic.harvest.harvestclient.models.DayEntryRequest;
+import com.enonic.harvest.harvestclient.models.Invoice;
+import com.enonic.harvest.harvestclient.models.InvoiceCollection;
+import com.enonic.harvest.harvestclient.models.InvoiceItemCategoryCollection;
+import com.enonic.harvest.harvestclient.models.InvoiceMessage;
+import com.enonic.harvest.harvestclient.models.InvoiceMessageCollection;
+import com.enonic.harvest.harvestclient.models.InvoicePayment;
+import com.enonic.harvest.harvestclient.models.InvoicePaymentCollection;
+import com.enonic.harvest.harvestclient.models.Project;
+import com.enonic.harvest.harvestclient.models.ProjectCollection;
+import com.enonic.harvest.harvestclient.models.Task;
+import com.enonic.harvest.harvestclient.models.TaskAssignmentCollection;
+import com.enonic.harvest.harvestclient.models.TaskCollection;
+import com.enonic.harvest.harvestclient.models.User;
+import com.enonic.harvest.harvestclient.models.UserAssignmentCollection;
+import com.enonic.harvest.harvestclient.models.UserCollection;
 import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByProjectParameters;
 import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByUserParameters;
 import com.enonic.harvest.harvestclient.parameters.GetRecentInvoicesParameters;
-import com.enonic.harvest.harvestclient.models.*;
-
-import java.util.Date;
 
 public interface HarvestClient
 {
@@ -33,6 +52,15 @@ public interface HarvestClient
 
     DayEntryCollection getDayEntriesByProject(GetDayEntriesByProjectParameters params)
             throws HarvestClientException;
+
+    void addDayEntry(DayEntryRequest request)
+            throws HarvestClientException;
+
+    void updateDayEntry(DayEntry entry) 
+	    throws HarvestClientException;
+
+    void deleteDayEntry(int id)
+                   throws HarvestClientException;
 
     ProjectCollection getProjects()
             throws HarvestClientException;
@@ -90,4 +118,5 @@ public interface HarvestClient
 
     InvoicePayment getInvoicePayment(int invoiceId, int id)
             throws HarvestClientException;
+    
 }

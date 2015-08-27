@@ -1,15 +1,5 @@
 package com.enonic.harvest.harvestclient;
 
-import com.enonic.harvest.harvestclient.exceptions.HarvestClientException;
-import com.enonic.harvest.harvestclient.exceptions.MissingParameterException;
-import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByUserParameters;
-import com.enonic.harvest.harvestclient.parameters.GetRecentInvoicesParameters;
-import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByProjectParameters;
-import com.enonic.harvest.harvestclient.models.*;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
-
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -17,6 +7,36 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
+
+import com.enonic.harvest.harvestclient.exceptions.HarvestClientException;
+import com.enonic.harvest.harvestclient.exceptions.MissingParameterException;
+import com.enonic.harvest.harvestclient.models.Client;
+import com.enonic.harvest.harvestclient.models.ClientCollection;
+import com.enonic.harvest.harvestclient.models.DayEntry;
+import com.enonic.harvest.harvestclient.models.DayEntryCollection;
+import com.enonic.harvest.harvestclient.models.DayEntryRequest;
+import com.enonic.harvest.harvestclient.models.Invoice;
+import com.enonic.harvest.harvestclient.models.InvoiceCollection;
+import com.enonic.harvest.harvestclient.models.InvoiceItemCategoryCollection;
+import com.enonic.harvest.harvestclient.models.InvoiceMessage;
+import com.enonic.harvest.harvestclient.models.InvoiceMessageCollection;
+import com.enonic.harvest.harvestclient.models.InvoicePayment;
+import com.enonic.harvest.harvestclient.models.InvoicePaymentCollection;
+import com.enonic.harvest.harvestclient.models.Project;
+import com.enonic.harvest.harvestclient.models.ProjectCollection;
+import com.enonic.harvest.harvestclient.models.Task;
+import com.enonic.harvest.harvestclient.models.TaskAssignmentCollection;
+import com.enonic.harvest.harvestclient.models.TaskCollection;
+import com.enonic.harvest.harvestclient.models.User;
+import com.enonic.harvest.harvestclient.models.UserAssignmentCollection;
+import com.enonic.harvest.harvestclient.models.UserCollection;
+import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByProjectParameters;
+import com.enonic.harvest.harvestclient.parameters.GetDayEntriesByUserParameters;
+import com.enonic.harvest.harvestclient.parameters.GetRecentInvoicesParameters;
 
 class DefaultHarvestClient
         implements HarvestClient
@@ -39,7 +59,7 @@ class DefaultHarvestClient
     public UserCollection getUsers()
             throws HarvestClientException
     {
-        return UserCollection.fromInputStream(this.getInputStream("/people"));
+        return UserCollection.fromInputStream(this.doGet("/people"));
     }
 
     @Override
@@ -55,21 +75,21 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return UserCollection.fromInputStream(this.getInputStream("/people?updated_since=%s", updatedSinceUrlString));
+        return UserCollection.fromInputStream(this.doGet("/people?updated_since=%s", updatedSinceUrlString));
     }
 
     @Override
     public User getUser(int id)
             throws HarvestClientException
     {
-        return User.fromInputStream(this.getInputStream("/people/%s", id));
+        return User.fromInputStream(this.doGet("/people/%s", id));
     }
 
     @Override
     public ClientCollection getClients()
             throws HarvestClientException
     {
-        return ClientCollection.fromInputStream(this.getInputStream("/clients"));
+        return ClientCollection.fromInputStream(this.doGet("/clients"));
     }
 
     @Override
@@ -85,14 +105,14 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return ClientCollection.fromInputStream(this.getInputStream("/clients?updated_since=%s", updatedSinceUrlString));
+        return ClientCollection.fromInputStream(this.doGet("/clients?updated_since=%s", updatedSinceUrlString));
     }
 
     @Override
     public Client getClient(int id)
             throws HarvestClientException
     {
-        return Client.fromInputStream(this.getInputStream("/clients/%s", id));
+        return Client.fromInputStream(this.doGet("/clients/%s", id));
     }
 
     @Override
@@ -115,7 +135,23 @@ class DefaultHarvestClient
 
         String urlParamString = URLEncodedUtils.format(urlParams, "utf-8");
 
-        return DayEntryCollection.fromInputStream(this.getInputStream("/people/%s/entries?%s", params.userId, urlParamString));
+        return DayEntryCollection.fromInputStream(this.doGet("/people/%s/entries?%s", params.userId, urlParamString));
+    }
+    
+    @Override
+    public void addDayEntry(DayEntryRequest request) throws HarvestClientException{
+	this.doPost("/daily/add", request.toXML());
+    }
+    
+    @Override
+    public void updateDayEntry(DayEntry entry) throws HarvestClientException{
+	DayEntryRequest request = new DayEntryRequest(entry);
+	this.doPost("/daily/update/%s", request.toXML(), entry.getId());
+    }
+
+    @Override
+    public void deleteDayEntry(int id) throws HarvestClientException{
+	this.doDelete("/daily/delete/%s", id);
     }
 
     @Override
@@ -138,14 +174,14 @@ class DefaultHarvestClient
 
         String urlParamString = URLEncodedUtils.format(urlParams, "utf-8");
 
-        return DayEntryCollection.fromInputStream(this.getInputStream("/projects/%s/entries?%s", params.projectId, urlParamString));
+        return DayEntryCollection.fromInputStream(this.doGet("/projects/%s/entries?%s", params.projectId, urlParamString));
     }
 
     @Override
     public ProjectCollection getProjects()
             throws HarvestClientException
     {
-        return ProjectCollection.fromInputStream(this.getInputStream("/projects"));
+        return ProjectCollection.fromInputStream(this.doGet("/projects"));
     }
 
     @Override
@@ -161,14 +197,14 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return ProjectCollection.fromInputStream(this.getInputStream("/projects?updated_since=%s", updatedSinceUrlString));
+        return ProjectCollection.fromInputStream(this.doGet("/projects?updated_since=%s", updatedSinceUrlString));
     }
 
     @Override
     public ProjectCollection getProjects(int clientId)
             throws HarvestClientException
     {
-        return ProjectCollection.fromInputStream(this.getInputStream("/projects?client=%s", clientId));
+        return ProjectCollection.fromInputStream(this.doGet("/projects?client=%s", clientId));
     }
 
     @Override
@@ -184,21 +220,21 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return ProjectCollection.fromInputStream(this.getInputStream("/projects?client=%s&updated_since=%s", clientId, updatedSinceUrlString));
+        return ProjectCollection.fromInputStream(this.doGet("/projects?client=%s&updated_since=%s", clientId, updatedSinceUrlString));
     }
 
     @Override
     public Project getProject(int id)
             throws HarvestClientException
     {
-        return Project.fromInputStream(this.getInputStream("/projects/%s", id));
+        return Project.fromInputStream(this.doGet("/projects/%s", id));
     }
 
     @Override
     public UserAssignmentCollection getUserAssignments(int projectId)
             throws HarvestClientException
     {
-        return UserAssignmentCollection.fromInputStream(this.getInputStream("/projects/%s/user_assignments", projectId));
+        return UserAssignmentCollection.fromInputStream(this.doGet("/projects/%s/user_assignments", projectId));
     }
 
     @Override
@@ -214,14 +250,14 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return UserAssignmentCollection.fromInputStream(this.getInputStream("/projects/%s/user_assignments?updated_since=%s", projectId, updatedSinceUrlString));
+        return UserAssignmentCollection.fromInputStream(this.doGet("/projects/%s/user_assignments?updated_since=%s", projectId, updatedSinceUrlString));
     }
 
     @Override
     public TaskCollection getTasks()
             throws HarvestClientException
     {
-        return TaskCollection.fromInputStream(this.getInputStream("/tasks"));
+        return TaskCollection.fromInputStream(this.doGet("/tasks"));
     }
 
     @Override
@@ -237,21 +273,21 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return TaskCollection.fromInputStream(this.getInputStream("/tasks?updated_since=%s", updatedSinceUrlString));
+        return TaskCollection.fromInputStream(this.doGet("/tasks?updated_since=%s", updatedSinceUrlString));
     }
 
     @Override
     public Task getTask(int id)
             throws HarvestClientException
     {
-        return Task.fromInputStream(this.getInputStream("/tasks/%s", id));
+        return Task.fromInputStream(this.doGet("/tasks/%s", id));
     }
 
     @Override
     public TaskAssignmentCollection getTaskAssignments(int projectId)
             throws HarvestClientException
     {
-        return TaskAssignmentCollection.fromInputStream(this.getInputStream("/projects/%s/task_assignments", projectId));
+        return TaskAssignmentCollection.fromInputStream(this.doGet("/projects/%s/task_assignments", projectId));
     }
 
     @Override
@@ -267,7 +303,7 @@ class DefaultHarvestClient
         {
             throw new HarvestClientException("Unsupported encoding.", e);
         }
-        return TaskAssignmentCollection.fromInputStream(this.getInputStream("/projects/%s/task_assignments?updated_since=%s", projectId, updatedSinceUrlString));
+        return TaskAssignmentCollection.fromInputStream(this.doGet("/projects/%s/task_assignments?updated_since=%s", projectId, updatedSinceUrlString));
     }
 
     @Override
@@ -291,52 +327,52 @@ class DefaultHarvestClient
 
         String urlParamString = URLEncodedUtils.format(urlParams, "utf-8");
 
-        return InvoiceCollection.fromInputStream(this.getInputStream("/invoices?%s", urlParamString));
+        return InvoiceCollection.fromInputStream(this.doGet("/invoices?%s", urlParamString));
     }
 
     @Override
     public Invoice getInvoice(int id)
             throws HarvestClientException
     {
-        return Invoice.fromInputStream(this.getInputStream("/invoices/%s", id));
+        return Invoice.fromInputStream(this.doGet("/invoices/%s", id));
     }
 
     @Override
     public InvoiceItemCategoryCollection getInvoiceItemCategories()
             throws HarvestClientException
     {
-        return InvoiceItemCategoryCollection.fromInputStream(this.getInputStream("/invoice_item_categories"));
+        return InvoiceItemCategoryCollection.fromInputStream(this.doGet("/invoice_item_categories"));
     }
 
     @Override
     public InvoiceMessageCollection getInvoiceMessages(int invoiceId)
             throws HarvestClientException
     {
-        return InvoiceMessageCollection.fromInputStream(this.getInputStream("/invoices/%s/messages", invoiceId));
+        return InvoiceMessageCollection.fromInputStream(this.doGet("/invoices/%s/messages", invoiceId));
     }
 
     @Override
     public InvoiceMessage getInvoiceMessage(int invoiceId, int id)
             throws  HarvestClientException
     {
-        return InvoiceMessage.fromInputStream(this.getInputStream("/invoices/%s/messages/%s", invoiceId, id));
+        return InvoiceMessage.fromInputStream(this.doGet("/invoices/%s/messages/%s", invoiceId, id));
     }
 
     @Override
     public InvoicePaymentCollection getInvoicePayments(int invoiceId)
             throws HarvestClientException
     {
-        return InvoicePaymentCollection.fromInputStream(this.getInputStream("/invoices/%s/payments", invoiceId));
+        return InvoicePaymentCollection.fromInputStream(this.doGet("/invoices/%s/payments", invoiceId));
     }
 
     @Override
     public InvoicePayment getInvoicePayment(int invoiceId, int id)
             throws HarvestClientException
     {
-        return InvoicePayment.fromInputStream(this.getInputStream("/invoices/%s/payments/%s", invoiceId, id));
+        return InvoicePayment.fromInputStream(this.doGet("/invoices/%s/payments/%s", invoiceId, id));
     }
 
-    private InputStream getInputStream(String url, Object... args)
+    private InputStream doGet(String url, Object... args)
             throws HarvestClientException
     {
         HarvestGetRequest request = new HarvestGetRequest();
@@ -345,5 +381,27 @@ class DefaultHarvestClient
         request.setUsername(this.username);
         request.setPassword(this.password);
         return request.getInputStream();
+    }
+    
+    private InputStream doPost(String url, String body, Object... args)
+	    throws HarvestClientException
+    {
+	HarvestPostRequest request = new HarvestPostRequest();
+	request.setUrl(String.format(url, args));
+	request.setSubdomain(this.subDomain);
+	request.setUsername(this.username);
+	request.setPassword(this.password);
+	return request.getInputStream(body);
+    }
+    
+    private void doDelete(String url, Object... args)
+	    throws HarvestClientException
+    {
+	HarvestDeleteRequest request = new HarvestDeleteRequest();
+	request.setUrl(String.format(url, args));
+	request.setSubdomain(this.subDomain);
+	request.setUsername(this.username);
+	request.setPassword(this.password);
+	request.execute();
     }
 }
